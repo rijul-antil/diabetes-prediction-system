@@ -1,8 +1,8 @@
 import os
-import gradio as gr
 import joblib
+import gradio as gr
 
-# Load the trained model
+# Load Model
 diabetes_model = joblib.load("diabetes_prediction_model.pkl")
 
 
@@ -16,7 +16,8 @@ def predict_diabetes(
     diabetes_pedigree,
     age,
 ):
-    prediction = diabetes_model.predict([[
+
+    values = [
         pregnancies,
         glucose,
         blood_pressure,
@@ -24,28 +25,43 @@ def predict_diabetes(
         insulin,
         bmi,
         diabetes_pedigree,
-        age
-    ]])[0]
+        age,
+    ]
+
+    # Validation
+    if any(v < 0 for v in values):
+        return "❌ Please enter valid (non-negative) values."
+
+    prediction = diabetes_model.predict([values])[0]
 
     if prediction == 1:
         return """
-## ⚠️ Positive for Diabetes
+## ⚠️ Diabetes Detected
 
-The patient may be at risk of diabetes.
+The patient may have diabetes.
 
-**Please consult a healthcare professional for proper diagnosis.**
+### Recommendation
+- Consult a doctor.
+- Exercise regularly.
+- Reduce sugar intake.
+- Maintain a healthy lifestyle.
 """
     else:
         return """
 ## ✅ No Diabetes Detected
 
-The patient appears to have a low likelihood of diabetes.
+The patient appears to have a low risk of diabetes.
+
+### Recommendation
+- Continue a healthy lifestyle.
+- Exercise regularly.
+- Eat a balanced diet.
 """
 
 
 css = """
 .gradio-container{
-    max-width:1000px !important;
+    max-width:950px;
     margin:auto;
 }
 
@@ -56,91 +72,69 @@ h1{
 .footer{
     text-align:center;
     color:gray;
-    font-size:14px;
     margin-top:20px;
+    font-size:14px;
 }
 
 .result{
-    border-radius:12px;
+    border:2px solid #4CAF50;
+    border-radius:10px;
+    padding:15px;
 }
 """
 
 
 with gr.Blocks(
-    theme=gr.themes.Soft(
-        primary_hue="blue",
-        secondary_hue="emerald"
-    ),
+    theme=gr.themes.Soft(),
     css=css,
-    title="Diabetes Prediction System",
+    title="Diabetes Prediction System"
 ) as interface:
 
-    gr.Markdown(
-        """
+    gr.Markdown("""
 # 🩺 Diabetes Prediction System
 
-### Predict the likelihood of diabetes using Machine Learning
+### Machine Learning Based Diabetes Prediction
 
-Fill in the patient's medical details below and click **Predict**.
-"""
-    )
+---
+
+### 👨‍💻 Developer Details
+
+**Name:** Rijul
+
+**Roll No.:** 28241282
+
+**Institute:** Panipat Institute of Engineering and Technology
+
+---
+
+Fill all patient details and click **Predict**.
+""")
 
     with gr.Row():
 
         with gr.Column():
 
-            pregnancies = gr.Number(
-                label="👶 Pregnancies",
-                value=0
-            )
-
-            glucose = gr.Number(
-                label="🩸 Glucose Level",
-                value=120
-            )
-
-            blood_pressure = gr.Number(
-                label="💓 Blood Pressure",
-                value=70
-            )
-
-            skin_thickness = gr.Number(
-                label="📏 Skin Thickness",
-                value=20
-            )
+            pregnancies = gr.Number(label="👶 Pregnancies", value=0)
+            glucose = gr.Number(label="🩸 Glucose", value=120)
+            blood_pressure = gr.Number(label="💓 Blood Pressure", value=70)
+            skin_thickness = gr.Number(label="📏 Skin Thickness", value=20)
 
         with gr.Column():
 
-            insulin = gr.Number(
-                label="💉 Insulin",
-                value=79
-            )
-
-            bmi = gr.Number(
-                label="⚖️ BMI",
-                value=25.0
-            )
-
+            insulin = gr.Number(label="💉 Insulin", value=79)
+            bmi = gr.Number(label="⚖️ BMI", value=25.0)
             diabetes_pedigree = gr.Number(
                 label="🧬 Diabetes Pedigree Function",
                 value=0.5
             )
+            age = gr.Number(label="🎂 Age", value=30)
 
-            age = gr.Number(
-                label="🎂 Age",
-                value=30
-            )
+    with gr.Row():
 
-    predict_btn = gr.Button(
-        "🔍 Predict",
-        variant="primary",
-        size="lg"
-    )
+        predict_btn = gr.Button("🔍 Predict", variant="primary")
+        clear_btn = gr.ClearButton()
 
-    output = gr.Markdown(
-        label="Prediction Result",
-        elem_classes="result"
-    )
+    output = gr.Markdown(elem_classes="result")
 
     predict_btn.click(
         fn=predict_diabetes,
@@ -157,15 +151,26 @@ Fill in the patient's medical details below and click **Predict**.
         outputs=output,
     )
 
-    gr.Markdown(
-        """
+    gr.Markdown("""
 ---
-<div class="footer">
-Developed with ❤️ using Gradio & Machine Learning
-</div>
-"""
-    )
 
+### 📢 Disclaimer
+
+This application is developed for educational purposes only.
+It should not be used as a substitute for professional medical advice.
+
+---
+
+<div class="footer">
+
+❤️ Developed by <b>Rijul</b><br>
+
+Roll No.: <b>28241282</b><br>
+
+Panipat Institute of Engineering and Technology
+
+</div>
+""")
 
 if __name__ == "__main__":
     interface.launch(
